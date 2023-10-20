@@ -1,0 +1,223 @@
+﻿@page "/counter"
+@using Word = Microsoft.Office.Interop.Word;
+@using System.Xml.Linq;
+@using System.Xml;
+@inject IJSRuntime JSRuntime
+
+
+<PageTitle>Laxmi's questions</PageTitle>
+
+<h1>Laxmi's Demo questions</h1>
+
+<br />
+
+
+@{
+
+
+	Word.Application application = new Word.Application();
+
+	Word.Document document = new Word.Document();
+
+	object filename = @"C:\Users\Public\Documents\X SS CCE [TS] U-2 ECO  Ideas of Development\X SS  CCE [TS] U-2 [1] What Development Promises,Different People, Different Goals.docx";
+
+	string sssss = AppDomain.CurrentDomain.BaseDirectory;
+	string ssssss = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).ToString();
+
+	object missing = System.Reflection.Missing.Value;
+
+	object readonly2 = true;
+
+	XmlDocument xmldoc = new XmlDocument();
+	XmlElement questions = xmldoc.CreateElement("Questions");
+	XmlElement global_question = null;
+	document = application.Documents.Open(ref filename, ref missing, ref readonly2, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing, ref missing);
+
+	string read = String.Empty;
+
+
+
+
+
+	List<string> data = new List<string>();
+	int qid = 1;
+
+	foreach (Word.Paragraph temprange in document.Paragraphs)
+	{
+
+		if (temprange.Range.Text.Contains("(") && temprange.Range.Text.Contains(")") && temprange.Range.Text.Contains("[") && temprange.Range.Text.Contains("]"))
+		{
+			int option_count = -1;
+
+			string ss = temprange.Range.Text;
+
+			string[] ans = ss.Split('[', ']');
+			int answer = 0;
+
+			for(int k=0;k<ans[1].Length;k++)
+			{
+				if(ans[1][k]>='a'&& ans[1][k]<='d')
+				{
+					answer = ans[1][k] - 'a';
+					k = ans[1].Length;
+				}
+				else if (ans[1][k] >= 'A' && ans[1][k] <= 'D')
+				{
+					answer = ans[1][k] - 'A';
+					k = ans[1].Length;
+				}
+			}
+
+
+
+			for(int i=0;i<ss.Length;i++)
+			{
+				if(ss[i]==')')
+				{
+
+					string temp1 = "";
+					for(int j=i+1;j<ss.Length;j++)
+					{
+						if(ss[j]=='('||ss[j]=='[')
+						{
+							option_count++;
+
+							string tempclr = "lightgrey";
+
+							string idd = Convert.ToString(i);
+
+							XmlElement option = xmldoc.CreateElement("Option");
+
+
+							if(option_count==answer)
+							{
+								<p>	<button @ref="btnref" class=@qid.ToString()  id=@qid.ToString() name="ans" style="background-color:@current_color">&nbsp @temp1  </button>&nbsp &nbsp </p>
+								XmlElement answer_xml = xmldoc.CreateElement("Answer");
+								answer_xml.InnerText = temp1;
+								option.InnerText = temp1;
+								global_question.AppendChild(option);
+								global_question.AppendChild(answer_xml);
+
+							}
+							else
+							{
+								<p>	<button @ref="btnref" id=@qid.ToString() class=@qid.ToString() name="noans" style="background-color:@current_color">&nbsp @temp1  </button>&nbsp &nbsp </p>
+								option.InnerText = temp1;
+								global_question.AppendChild(option);
+							}
+
+
+							j = ss.Length;
+						}
+						else temp1+=ss[j];
+
+					}
+
+				}
+
+
+			}
+
+			questions.AppendChild(global_question);
+			global_question = null;
+
+		}
+
+
+
+		else
+		{
+			if (temprange.Range.Text.Length > 0 && contains_all_letters_and_digits(temprange.Range.Text) )
+			 {
+              
+				
+
+				qid++;
+				<h1 class=@qid.ToString() id=@qid.ToString()> @temprange.Range.Text</h1>
+				XmlElement question = xmldoc.CreateElement("Question" + qid.ToString());
+				XmlElement q = xmldoc.CreateElement("Q");
+				q.InnerText = temprange.Range.Text;
+				question.AppendChild(q);
+				global_question = question;
+			}
+		}
+
+		xmldoc.AppendChild(questions);
+		xmldoc.Save(AppDomain.CurrentDomain.BaseDirectory + "\\test.xml");
+		Check3();
+
+	}
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+@code {
+
+
+	bool contains_all_letters_and_digits(string s)
+	{
+		
+
+		foreach(char ch in s)
+		{
+			if (char.IsLetter(ch))
+				return true;
+		}
+
+		return false;
+	}
+
+
+
+
+
+	public ElementReference btnref;
+	public string clr_green = "green";
+	public string current_color = "lightgrey";
+
+	private int currentCount = 0;
+
+	void IncrementCount()
+	{
+		current_color = clr_green;
+	}
+
+	IJSObjectReference JSObjectReference { get;set; }
+
+	private async void Check(string id)
+	{
+		JSObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/css/counter.js");
+		await JSObjectReference.InvokeVoidAsync("Correct_ans", id);
+	}
+
+	private async void Check2(string id)
+	{
+		JSObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/css/counter.js");
+		await JSObjectReference.InvokeVoidAsync("Wrong_ans", id);
+	}
+
+
+
+
+	private async void Check3()
+	{
+		JSObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/css/counter.js");
+		await JSObjectReference.InvokeVoidAsync("add_ans2");
+	}
+
+
+
+
+
+}
